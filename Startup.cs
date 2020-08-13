@@ -32,6 +32,8 @@ namespace JWTServer
 
         private IConfiguration Configuration { get; }
 
+        private static string MyCorsPolicy = "CorsPolicy";
+
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
@@ -81,6 +83,15 @@ namespace JWTServer
                 builder => builder.MigrationsAssembly(typeof(Startup).Assembly.GetName().Name)));
             services.AddIdentity<User, Role>().AddEntityFrameworkStores<LibraryDbContext>();
             services.AddControllers();
+
+            services.AddCors(options =>
+            {
+                //Origin：被允许请求的本项目资源的源（协议https+域名+端口（后边不能携带斜杠/））
+                //options.AddPolicy("AllowAllMethodsPolicy",builder=>builder.WithOrigins("https://localhost:6001").AllowAnyMethod());
+                //options.AddPolicy("AllAnyOriginPolicy",builder=>builder.AllowAnyOrigin());
+                //options.AddDefaultPolicy(builder=>builder.WithOrigins("https://localhost:6001"));
+                options.AddPolicy(MyCorsPolicy,builder=>builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -107,11 +118,15 @@ namespace JWTServer
 
             app.UseRouting();
 
+            //CORS中间件应添加在任何可能会用到CORS功能的中间件之前
+            //app.UseCors(builder => builder.WithOrigins("http://localhost:5000"));
+            app.UseCors("AllowAllMethodsPolicy");
+
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllers();
+                endpoints.MapControllers().RequireCors(MyCorsPolicy);
             });
         }
     }
