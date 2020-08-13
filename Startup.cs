@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -7,6 +8,9 @@ using JWTServer.Entities;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption;
+using Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationModel;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -31,7 +35,16 @@ namespace JWTServer
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDataProtection();
+            //添加数据保护API
+            services.AddDataProtection()
+                .PersistKeysToFileSystem(new DirectoryInfo("data_keys"))//更改存储文件路径
+                .SetDefaultKeyLifetime(TimeSpan.FromDays(30))//更改生命周期
+                .UseCryptographicAlgorithms(new AuthenticatedEncryptorConfiguration()//更改加密算法和散列算法
+                {
+                    EncryptionAlgorithm = EncryptionAlgorithm.AES_256_CBC,
+                    ValidationAlgorithm = ValidationAlgorithm.HMACSHA256
+                }).SetApplicationName("shared app name");//不同程序之间设置相同的名称，并创建相同目的的protection,可以是不同程序间可以彼此解密
+            
             var tokenSection = Configuration.GetSection("Security:Token");
 
             services.AddAuthentication(options =>
