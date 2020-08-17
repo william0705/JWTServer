@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using JWTServer.CustomMiddleware;
 using JWTServer.Entities;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -92,6 +93,8 @@ namespace JWTServer
                 //options.AddDefaultPolicy(builder=>builder.WithOrigins("https://localhost:6001"));
                 options.AddPolicy(MyCorsPolicy,builder=>builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
             });
+
+            services.AddMemoryCache();//∆Ù”√ƒ⁄¥Êª∫¥Ê
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -115,6 +118,8 @@ namespace JWTServer
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
             });
+
+            app.UseMiddleware<RequestRateLimitMiddleware>();
 
             app.UseRouting();
 
